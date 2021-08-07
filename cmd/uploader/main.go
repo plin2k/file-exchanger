@@ -8,6 +8,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"os"
+)
+
+const (
+    storageFolder = "./storage/"
 )
 
 func index(c *gin.Context) {
@@ -21,16 +26,22 @@ func upload(c *gin.Context) {
 	}
 
 	file.Filename = strconv.Itoa(int(time.Now().Unix())) + "-" + strings.ReplaceAll(file.Filename, " ", "-")
-	err = c.SaveUploadedFile(file, "./storage/"+file.Filename)
+	err = c.SaveUploadedFile(file, storageFolder+file.Filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	c.Redirect(http.StatusSeeOther, "/file/"+file.Filename)
 }
-
+func removeFile(fileName string) {
+	err := os.Remove(storageFolder + fileName)
+    if err != nil {
+        log.Fatal(err)
+    }
+}
 func download(c *gin.Context) {
-	c.File("./storage/" + c.Param("filename"))
+    defer removeFile(c.Param("filename"))
+	c.File(storageFolder + c.Param("filename"))
 }
 
 func file(c *gin.Context) {
